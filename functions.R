@@ -50,8 +50,9 @@ extract_message <- function(tbl) {
 msg <- extract_message(a01)
 
 # dependency: none
-extract_header <- function(message) {
-  rows <- str_split(message,"\\r")[[1]]
+# Extract header, take single msg and extract the header for each segment
+extract_header <- function(msg) {
+  rows <- str_split(msg,"\\r")[[1]]
   rows <- rows[rows != ""]
   row_split <- sapply(rows, function(x) strsplit(x, "\\|"))
   headers <- sapply(row_split, '[[', 1)
@@ -66,16 +67,21 @@ xxx <- sapply(msg, extract_header)
 #' -----------------------------------------------------------------------------
 # Main functions:
 # Check whether a message has desired segment
-check_segment <- function(message, segment) {
-  ifelse(grepl(segment, message),
+# Utility function: Check whether a single message has desired segment
+check_segment <- function(msg, segment) {
+  ifelse(grepl(segment, msg),
          "has segment",
          "segment is missing")
 }
 
-# Get desired segment row index in text msg
-get_segment_index <- function(message, segment) {
-  if(check_segment(message, segment) == "has segment") {
-    headers <- extract_header(message)
+# test
+check_segment(msg[1],'PID')
+check_segment(msg[1],'DG1')
+
+# Get desired segment row index in a single msg
+get_segment_index <- function(msg, segment) {
+  if(check_segment(msg, segment) == "has segment") {
+    headers <- extract_header(msg)
     segment_header <- which(headers == segment)
   } else {
     segment_header <- NA
@@ -83,36 +89,42 @@ get_segment_index <- function(message, segment) {
   return(segment_header)
 }
 
-get_segment <- function(message, segment) {
-  b <- str_split(message,"\\r")
-  segment_out <- b[[1]][get_segment_index(message, segment)]
+# test
+get_segment_index(msg[1],'MSH')
+get_segment_index(msg[1],'DG1')
+
+get_segment <- function(msg, segment) {
+  b <- str_split(msg,"\\r")[[1]]
+  if (check_segment(msg, segment) == "has segment") {
+    segment_out <- b[get_segment_index(msg, segment)]
+  } else {
+    segment_out = NA
+  }
   return(segment_out)
 }
+
+# test
+get_segment(msg[1],'PID')
+get_segment(msg[1],'MSH')
+get_segment(msg[1],'DG1')
 
 get_all_segments <- function(messages, segment) {
   segments <- unlist(lapply(messages, get_segment, segment = segment))
   return(segments)
 }
+xxx <- lapply(msg, get_segment, segment = 'DG1') #index 688 Does not work on duplicated segment, i.e. DG1
+xx <- get_all_segments(msg,'DG1')
 
-xx <- get_all_segments(msg,'NK1')
-
-# get_segment_length <- function(message, segment) {
-#   # get segment row number
-#   row_number <- unlist(lapply(message, get_segment_index, segment = segment))
-# }
-
-
-
-## Check number of fields of PID
-max_seg_length <- function(message,segment) {
-  row_number <- unlist(lapply(message, get_segment_index, segment = segment))
-  b <- str_split(message,"\\r")
-  bb <- sapply(b, "[[", row_number)
-  
+max_segment_length <- function(message, segment) {
+  seg <- get_all_segments(message, segment)
+  fields <- sapply(seg, str_split, pattern = '\\|')
+  fields_num <- unlist(lapply(fields, length))
+  attributes(fields_num) = NULL
+  max_length = max(fields_num)
+  return
 }
 
-# test code
-max_seg_length(msg,'PID')
+
 
 # get_PID_tbl <- function(message,segment) {
 #   # create an empty matrix for intaking number
@@ -128,10 +140,10 @@ max_seg_length(msg,'PID')
 
 # get encounter number
 extract_encounter_num <- function(message) {
-  b <- str_split(message,"\\r")
-  bb <- sapply(b, "[", 3) # need modification here
-  bbb <- str_split(bb,"\\|")
-  encounter_string <- sapply(bbb, "[", 19)
+  b <- get_all_segments(message, 'PID')
+  bb <- sapply(b, str_split, pattern = "\\|") # need modification here
+  attributes(bb) <- NULL
+  encounter_string <- sapply(bb, "[", 19)
   encounter_str_split <- str_split(encounter_string, "\\^")
   encounter_num <- sapply(encounter_str_split, "[", 1)
   return(encounter_num)
@@ -145,10 +157,10 @@ sum(extracted_enc != real_enc)
 
 # get msg time
 extract_msg_time <- function(message) {
-  b <- str_split(message,"\\r")
-  bb <- sapply(b, "[", 1) # need modification here
-  bbb <- str_split(bb,"\\|")
-  msg_time <- lubridate::as_datetime(sapply(bbb, "[", 7)) # diff btw msg time and event time
+  b <- get_all_segments(message, 'MSH')
+  bb <- sapply(b, str_split, pattern = "\\|") # need modification here
+  attributes(bb) <- NULL
+  msg_time <- lubridate::as_datetime(sapply(bb, "[", 7)) # diff btw msg time and event time
   return(msg_time)
 }
 
@@ -163,4 +175,3 @@ msg03 <- extract_message(a03)
 msg_time <- extract_msg_time(msg03)
 msg_time_real <- a03 %>% select(hl7msgdatetime) %>% pull()
 sum(msg_time_real != msg_time)
-
