@@ -33,7 +33,7 @@ hl7_df <- get_ms4_tbl(con)
 
 # dependency: dplyr
 get_event <- function(ms4_tbl, event_type) {
-  event_tbl <- hl7_df %>% filter(hl7triggerevent == event_type) %>% collect()
+  event_tbl <- ms4_tbl %>% filter(hl7triggerevent == event_type) %>% collect()
   return(event_tbl)
 }
 
