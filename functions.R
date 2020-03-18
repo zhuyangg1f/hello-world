@@ -23,17 +23,17 @@ connect_postgre <- function(username, password = getPass::getPass(msg = 'passwor
 con <- connect_postgre('yangz')
 
 # denpendency: dplyr
-get_ms4_tbl <- function(con) {
-  ms4_tbl <- tbl(con, "testmessages") # should change to "ms4messages" for production
-  return(ms4_tbl)
+ms4_tbl <- function(con) {
+  tbl <- tbl(con, "testmessages") # should change to "ms4messages" for production
+  return(tbl)
 }
 
 # test code
-hl7_df <- get_ms4_tbl(con)
+hl7_df <- ms4_tbl(con)
 
 # dependency: dplyr
-get_event <- function(ms4_tbl, event_type) {
-  event_tbl <- ms4_tbl %>% filter(hl7triggerevent == event_type) %>% collect()
+get_event <- function(tbl, event_type) {
+  event_tbl <- tbl %>% filter(hl7triggerevent == event_type) %>% collect()
   return(event_tbl)
 }
 

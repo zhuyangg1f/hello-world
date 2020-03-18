@@ -39,8 +39,8 @@ connect_postgre <- function(username, password = getPass::getPass(msg = 'passwor
 #' head(hl7_df)
 #' }
 ms4_tbl <- function(con) {
-  ms4_tbl <- dplyr::tbl(con, "ms4messages")
-  return(ms4_tbl)
+  tbl <- dplyr::tbl(con, "ms4messages")
+  return(tbl)
 }
 
 
@@ -61,6 +61,6 @@ ms4_tbl <- function(con) {
 #' head(a01)
 #' }
 get_event_tbl <- function(tbl, event_type) {
-  event_tbl <- hl7_df %>% filter(hl7triggerevent == event_type) %>% collect()
+  event_tbl <- tbl %>% filter(hl7triggerevent == event_type) %>% collect()
   return(event_tbl)
 }
