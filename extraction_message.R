@@ -112,9 +112,9 @@ extract_segment <- function(msg, segment) {
 
 #' Extract all desired message segments
 #'
-#' Extract desired message segment from a vector of HL7 messages text. This function is not applicable to the segment which
+#' Extract desired message segment from a list of HL7 messages text. This function is not applicable to the segment which
 #' can appear twice or more times in the message text, such as 'DG1'
-#' @param messages a vector of string, each element represents a HL7 message text
+#' @param messages a list of string, each element represents a HL7 message text
 #' @param segment a character string as desired segment header, such as 'MSH', 'PID'
 #' @keywords extract
 #' @return a vector of string, each string is the message content for desired segment. For example 'MSH|XX||20200314||'
